@@ -1,0 +1,12 @@
+diff --git a/lib/app.dart b/lib/app.dart
+index 2b65342..51a7550 100644
+--- a/lib/app.dart
++++ b/lib/app.dart
+@@ -10,6 +10,7 @@ class App extends StatelessWidget {
+   Widget build(BuildContext context) {
+     return MaterialApp(
+       title: 'Flutter App',
++      debugShowCheckedModeBanner: false,
+       routes: {
+         '/': (_) => const LoginScreen(),
+         '/home': (_) => const HomeScreen(),

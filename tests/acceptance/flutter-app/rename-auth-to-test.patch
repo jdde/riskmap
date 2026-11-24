@@ -1,0 +1,4 @@
+diff --git a/lib/features/login/auth_service.dart b/test/auth_service.dart
+similarity index 100%
+rename from lib/features/login/auth_service.dart
+rename to test/auth_service.dart

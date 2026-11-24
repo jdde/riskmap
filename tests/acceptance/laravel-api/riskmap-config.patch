@@ -1,0 +1,13 @@
+diff --git a/.riskmap.yml b/.riskmap.yml
+index d85b05f..17cab6c 100644
+--- a/.riskmap.yml
++++ b/.riskmap.yml
+@@ -9,7 +9,7 @@ dimensions:
+   data:         { type: ordered, values: [none, internal, personal] }
+ 
+ # Whatever no rule matches is high. In this project that is, for example, `phpunit.xml` and `.env.example`.
+-default: { risk: high }
++default: { risk: low }
+ 
+ rules:
+   - id: docs

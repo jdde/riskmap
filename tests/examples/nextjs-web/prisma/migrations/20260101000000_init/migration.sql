@@ -1,0 +1,10 @@
+CREATE TABLE "User" (
+  "id" TEXT PRIMARY KEY,
+  "email" TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE "Order" (
+  "id" TEXT PRIMARY KEY,
+  "sessionId" TEXT NOT NULL UNIQUE,
+  "paid" BOOLEAN NOT NULL DEFAULT false
+);

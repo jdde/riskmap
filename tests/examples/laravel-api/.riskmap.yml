@@ -1,0 +1,106 @@
+# Riskmap for a Laravel API.
+version: 1
+
+dimensions:
+  domain:       { type: set }
+  # Changes that cannot simply be undone after rollout.
+  irreversible: { type: flag }
+  # What kind of data a path touches. The highest value wins.
+  data:         { type: ordered, values: [none, internal, personal] }
+
+# Whatever no rule matches is high. In this project that is, for example, `phpunit.xml` and `.env.example`.
+default: { risk: high }
+
+rules:
+  - id: docs
+    match: ["docs/**", "README.md"]
+    labels: { risk: low, domain: [docs] }
+    reason: "Documentation, no effect at runtime"
+
+  - id: tests
+    match: ["tests/**", "database/factories/**"]
+    labels: { risk: low, domain: [tests] }
+    reason: "Tests and factories do not run in production"
+
+  - id: views
+    match: ["resources/views/**"]
+    labels: { risk: medium, domain: [ui] }
+    reason: "Visible user interface"
+
+  # Broad rule for the application code. Narrower rules below tighten individual parts.
+  - id: app
+    match: ["app/**"]
+    labels: { risk: medium, domain: [app] }
+    reason: "Application code without a special classification"
+
+  - id: models
+    match: ["app/Models/**"]
+    labels: { risk: medium, domain: [data], data: internal }
+    reason: "Models determine what is read and written"
+
+  - id: personal-data
+    match: ["app/Models/User.php", "database/migrations/*_create_users_table.php"]
+    labels: { risk: high, data: personal }
+    reason: "Personal data"
+
+  - id: auth
+    match:
+      - "app/Http/Controllers/Auth/**"
+      - "app/Http/Middleware/**"
+      - "app/Policies/**"
+      - "config/auth.php"
+    labels: { risk: high, domain: [auth] }
+    reason: "Sign-in, permissions and tenant separation"
+
+  - id: billing
+    match: ["app/Services/Billing/**"]
+    labels: { risk: high, domain: [billing] }
+    reason: "Invoice amounts and taxes"
+
+  - id: migrations
+    match: ["database/migrations/**"]
+    labels: { risk: high, domain: [data], irreversible: true, data: internal }
+    reason: "Migrations change the schema of the production database"
+
+  - id: seeders
+    match: ["database/seeders/**"]
+    labels: { risk: medium, domain: [data] }
+    reason: "Seeders write data when they are run"
+
+  - id: routes
+    match: ["routes/**"]
+    labels: { risk: high, domain: [api] }
+    reason: "Public entry points and their middleware"
+
+  - id: runtime
+    match: ["config/**", "bootstrap/**", "public/index.php", "artisan"]
+    labels: { risk: high, domain: [runtime] }
+    reason: "Configuration and startup of the application"
+
+  - id: build
+    match: ["composer.json", "composer.lock"]
+    labels: { risk: high, domain: [build] }
+    reason: "Dependencies affect the whole application"
+
+  - id: ci
+    match: [".github/**"]
+    labels: { risk: high, domain: [ci] }
+    reason: "CI and gates must not loosen themselves"
+
+tests:
+  - path: "app/Http/Controllers/OrderController.php"
+    expect: { risk: medium, domain: [app] }
+  - path: "app/Http/Controllers/Auth/LoginController.php"
+    expect: { risk: high, domain: [app, auth] }
+  - path: "app/Models/Order.php"
+    expect: { risk: medium, data: internal }
+  - path: "app/Models/User.php"
+    expect: { risk: high, data: personal }
+  - path: "database/migrations/2026_01_15_000000_create_orders_table.php"
+    expect: { risk: high, irreversible: true, data: internal }
+  - path: "config/auth.php"
+    expect: { risk: high, domain: [auth, runtime] }
+  - path: "tests/Feature/OrderTest.php"
+    expect: { risk: low }
+  - path: "application/Models/User.php"   # near miss: not app/
+    expect: { risk: high, domain: [] }

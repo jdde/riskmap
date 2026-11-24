@@ -1,0 +1,57 @@
+diff --git a/app/Http/Controllers/OrderController.php b/app/Http/Controllers/OrderController.php
+index cedc235..096b633 100644
+--- a/app/Http/Controllers/OrderController.php
++++ b/app/Http/Controllers/OrderController.php
+@@ -30,4 +30,12 @@ class OrderController extends Controller
+ 
+         return $order;
+     }
++
++    public function destroy(Order $order)
++    {
++        $this->authorize('view', $order);
++        $order->delete();
++
++        return response()->noContent();
++    }
+ }
+diff --git a/database/migrations/2026_01_15_000000_create_orders_table.php b/database/migrations/2026_01_15_000000_create_orders_table.php
+index 9a63598..1620394 100644
+--- a/database/migrations/2026_01_15_000000_create_orders_table.php
++++ b/database/migrations/2026_01_15_000000_create_orders_table.php
+@@ -13,6 +13,7 @@ return new class extends Migration
+             $table->foreignId('user_id')->constrained();
+             $table->unsignedInteger('total_cents');
+             $table->timestamps();
++            $table->softDeletes();
+         });
+     }
+ 
+diff --git a/routes/api.php b/routes/api.php
+index 9bc1a70..88833fc 100644
+--- a/routes/api.php
++++ b/routes/api.php
+@@ -8,5 +8,5 @@ use Illuminate\Support\Facades\Route;
+ Route::post('/login', LoginController::class);
+ 
+ Route::middleware(['auth:sanctum', EnsureTenant::class])->group(function () {
+-    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
++    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show', 'destroy']);
+ });
+diff --git a/tests/Feature/OrderTest.php b/tests/Feature/OrderTest.php
+index 057ee18..9a10fad 100644
+--- a/tests/Feature/OrderTest.php
++++ b/tests/Feature/OrderTest.php
+@@ -18,4 +18,12 @@ class OrderTest extends TestCase
+             ->postJson('/api/orders', ['total_cents' => 1000])
+             ->assertCreated();
+     }
++
++    public function test_a_user_can_delete_an_order(): void
++    {
++        $user = User::factory()->create(['tenant_id' => 1]);
++        $order = $user->orders()->create(['total_cents' => 1000]);
++
++        $this->actingAs($user)->deleteJson("/api/orders/{$order->id}")->assertNoContent();
++    }
+ }

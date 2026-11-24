@@ -1,0 +1,158 @@
+# Expected results for tests/examples/nextjs-web. Format: see tests/README.md.
+example: nextjs-web
+
+files:
+  ".env.example":                              { risk: high,   domain: [],             protected: false }
+  ".github/workflows/ci.yml":                  { risk: high,   domain: [ci],           protected: true }
+  ".gitignore":                                { risk: high,   domain: [],             protected: false }
+  ".riskmap.yml":                              { risk: high,   domain: [],             protected: true }
+  "README.md":                                 { risk: low,    domain: [docs],         protected: false }
+  "docs/architecture.md":                      { risk: low,    domain: [docs],         protected: false }
+  "next.config.ts":                            { risk: high,   domain: [build],        protected: false }
+  "package-lock.json":                         { risk: high,   domain: [build],        protected: false }
+  "package.json":                              { risk: high,   domain: [build],        protected: false }
+  "prisma/migrations/20260101000000_init/migration.sql": { risk: high, domain: [data], protected: false }
+  "prisma/schema.prisma":                      { risk: high,   domain: [data],         protected: false }
+  "public/logo.svg":                           { risk: medium, domain: [ui],           protected: false }
+  "src/app/(shop)/checkout/page.tsx":          { risk: high,   domain: [payments, ui], protected: false }
+  "src/app/api/auth/[...nextauth]/route.ts":   { risk: high,   domain: [auth],         protected: false }
+  "src/app/api/checkout/route.ts":             { risk: high,   domain: [payments],     protected: false }
+  "src/app/api/webhooks/stripe/route.ts":      { risk: high,   domain: [payments],     protected: false }
+  "src/app/globals.css":                       { risk: medium, domain: [ui],           protected: false }
+  "src/app/layout.tsx":                        { risk: medium, domain: [ui],           protected: false }
+  "src/app/page.tsx":                          { risk: medium, domain: [ui],           protected: false }
+  "src/components/Button.test.tsx":            { risk: low,    domain: [tests],        protected: false }
+  "src/components/Button.tsx":                 { risk: medium, domain: [ui],           protected: false }
+  "src/lib/auth.ts":                           { risk: high,   domain: [auth],         protected: false }
+  "src/lib/db.ts":                             { risk: high,   domain: [data],         protected: false }
+  "src/lib/stripe.test.ts":                    { risk: low,    domain: [tests],        protected: false }
+  "src/lib/stripe.ts":                         { risk: high,   domain: [payments],     protected: false }
+  "src/middleware.ts":                         { risk: high,   domain: [auth],         protected: false }
+  "tsconfig.json":                             { risk: high,   domain: [build],        protected: false }
+
+changes:
+  - id: docs-only
+    patch: "nextjs-web/docs-only.patch"
+    description: "Documentation only"
+    paths: ["README.md", "docs/architecture.md"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [docs], protected: false }
+
+  - id: docs-with-special-characters
+    patch: "nextjs-web/docs-with-special-characters.patch"
+    description: "A space and non-ASCII characters in the path do not change the classification"
+    paths: ["docs/Über uns.md"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [docs], protected: false }
+
+  - id: component-with-test
+    patch: "nextjs-web/component-with-test.patch"
+    description: "Component and its test: the higher value wins"
+    paths: ["src/components/Button.tsx", "src/components/Button.test.tsx"]
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [tests, ui], protected: false }
+
+  - id: homepage
+    patch: "nextjs-web/homepage.patch"
+    description: "Home page and styles: ordinary user interface"
+    paths: ["src/app/page.tsx", "src/app/globals.css"]
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [ui], protected: false }
+
+  - id: payment-test-only
+    patch: "nextjs-web/payment-test-only.patch"
+    description: "A test next to the payment logic does not match the rule payments"
+    paths: ["src/lib/stripe.test.ts"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [tests], protected: false }
+
+  - id: checkout-page
+    patch: "nextjs-web/checkout-page.patch"
+    description: "One file matches two rules (ui and payments)"
+    paths: ["src/app/(shop)/checkout/page.tsx"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [payments, ui], protected: false }
+
+  - id: feature-across-layers
+    patch: "nextjs-web/feature-across-layers.patch"
+    description: "User interface, payment logic and schema in one change"
+    paths:
+      - "src/app/page.tsx"
+      - "src/lib/stripe.ts"
+      - "prisma/schema.prisma"
+      - "docs/architecture.md"
+    expect:
+      status: ok
+      labels: { risk: high, domain: [data, docs, payments, ui], protected: false }
+
+  - id: unmatched-file
+    patch: "nextjs-web/unmatched-file.patch"
+    description: "No match: the default applies"
+    paths: [".env.example"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], protected: false }
+
+  - id: near-miss
+    patch: "nextjs-web/near-miss.patch"
+    description: "Near misses stay at the default"
+    paths: ["docs2/readme.md", "src/components2/Button.tsx", "apps/web/package.json"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], protected: false }
+
+  - id: rename-out-of-auth
+    patch: "nextjs-web/rename-out-of-auth.patch"
+    description: "Rename from src/lib/auth.ts to docs/auth.md: both the old and the new path count"
+    paths: ["src/lib/auth.ts", "docs/auth.md"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [auth, docs], protected: false }
+
+  - id: ci-workflow
+    patch: "nextjs-web/ci-workflow.patch"
+    description: "A protected path sets the flag"
+    paths: [".github/workflows/ci.yml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [ci], protected: true }
+
+  - id: riskmap-config
+    patch: "nextjs-web/riskmap-config.patch"
+    description: "Self-protection: the rule file is fixed at the strictest level"
+    paths: [".riskmap.yml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], protected: true }
+
+  - id: riskmap-config-with-docs
+    patch: "nextjs-web/riskmap-config-with-docs.patch"
+    description: "Self-protection also applies next to lenient files"
+    paths: [".riskmap.yml", "README.md"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [docs], protected: true }
+
+  - id: empty-change
+    description: "An empty path set yields the default, never the lowest level"
+    paths: []
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], protected: false }
+
+  - id: incomplete-input
+    description: "An incomplete path set yields the strictest result"
+    paths: ["README.md"]
+    complete: false
+    expect:
+      status: incomplete
+      labels:
+        risk: high
+        domain: [auth, build, ci, data, docs, payments, tests, ui]
+        protected: true

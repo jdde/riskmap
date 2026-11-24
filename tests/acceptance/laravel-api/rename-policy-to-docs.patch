@@ -1,0 +1,4 @@
+diff --git a/app/Policies/OrderPolicy.php b/docs/policy.md
+similarity index 100%
+rename from app/Policies/OrderPolicy.php
+rename to docs/policy.md

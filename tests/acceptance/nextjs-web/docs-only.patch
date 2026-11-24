@@ -1,0 +1,21 @@
+diff --git a/README.md b/README.md
+index 84f312b..c3d1509 100644
+--- a/README.md
++++ b/README.md
+@@ -4,3 +4,7 @@ Example project for Riskmap: a small shop built with Next.js (App Router), Prism
+ 
+ The project is only a skeleton. It shows the structure Next.js prescribes and does not run.
+ The risk classification is in `.riskmap.yml`.
++
++## Development
++
++`npm run dev` starts the development server.
+diff --git a/docs/architecture.md b/docs/architecture.md
+index 7f77732..94cc7f0 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -4,3 +4,4 @@
+ - `src/components`: reusable UI building blocks
+ - `src/lib`: auth, database, Stripe
+ - `prisma`: schema and migrations
++- `public`: static files

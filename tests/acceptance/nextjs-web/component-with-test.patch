@@ -1,0 +1,32 @@
+diff --git a/src/components/Button.test.tsx b/src/components/Button.test.tsx
+index 3c91c0d..726e219 100644
+--- a/src/components/Button.test.tsx
++++ b/src/components/Button.test.tsx
+@@ -6,4 +6,8 @@ describe("Button", () => {
+   it("renders a link when href is set", () => {
+     expect(renderToString(<Button href="/x">Go</Button>)).toContain("<a");
+   });
++
++  it("can be disabled", () => {
++    expect(renderToString(<Button disabled>Go</Button>)).toContain("disabled");
++  });
+ });
+diff --git a/src/components/Button.tsx b/src/components/Button.tsx
+index d1aefc2..bff0c08 100644
+--- a/src/components/Button.tsx
++++ b/src/components/Button.tsx
+@@ -2,11 +2,12 @@ type ButtonProps = {
+   children: React.ReactNode;
+   href?: string;
+   type?: "button" | "submit";
++  disabled?: boolean;
+ };
+ 
+-export function Button({ children, href, type = "button" }: ButtonProps) {
++export function Button({ children, href, type = "button", disabled = false }: ButtonProps) {
+   if (href) {
+     return <a href={href}>{children}</a>;
+   }
+-  return <button type={type}>{children}</button>;
++  return <button type={type} disabled={disabled}>{children}</button>;
+ }

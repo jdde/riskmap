@@ -1,0 +1,26 @@
+diff --git a/android/app/build.gradle.kts b/android/app/build.gradle.kts
+index fe5ca17..3853656 100644
+--- a/android/app/build.gradle.kts
++++ b/android/app/build.gradle.kts
+@@ -10,7 +10,7 @@ android {
+ 
+     defaultConfig {
+         applicationId = "com.example.flutter_app"
+-        minSdk = flutter.minSdkVersion
++        minSdk = 24
+         targetSdk = flutter.targetSdkVersion
+         versionCode = flutter.versionCode
+         versionName = flutter.versionName
+diff --git a/ios/Runner/Info.plist b/ios/Runner/Info.plist
+index 5a92dab..2d773c9 100644
+--- a/ios/Runner/Info.plist
++++ b/ios/Runner/Info.plist
+@@ -8,6 +8,8 @@
+ 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+ 	<key>CFBundleShortVersionString</key>
+ 	<string>$(FLUTTER_BUILD_NAME)</string>
++	<key>NSCameraUsageDescription</key>
++	<string>Photos for the profile</string>
+ 	<key>CFBundleVersion</key>
+ 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+ </dict>

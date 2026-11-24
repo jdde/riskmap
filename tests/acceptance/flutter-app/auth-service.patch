@@ -1,0 +1,11 @@
+diff --git a/lib/features/login/auth_service.dart b/lib/features/login/auth_service.dart
+index 00b1455..97b67a3 100644
+--- a/lib/features/login/auth_service.dart
++++ b/lib/features/login/auth_service.dart
+@@ -16,4 +16,6 @@ class AuthService {
+   }
+ 
+   void signOut() => _token = null;
++
++  Map<String, String> get headers => {'Authorization': 'Bearer $_token'};
+ }

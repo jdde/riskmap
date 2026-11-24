@@ -1,0 +1,13 @@
+diff --git a/.riskmap.yml b/.riskmap.yml
+index 49d25fe..860dd45 100644
+--- a/.riskmap.yml
++++ b/.riskmap.yml
+@@ -6,7 +6,7 @@ dimensions:
+   protected: { type: flag }
+ 
+ # Whatever no rule matches is high. In this project that is, for example, `.gitignore` and `.env.example`.
+-default: { risk: high }
++default: { risk: low }
+ 
+ rules:
+   - id: docs

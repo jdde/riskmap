@@ -1,0 +1,9 @@
+diff --git a/.env.example b/.env.example
+index 7eb7267..d6e201f 100644
+--- a/.env.example
++++ b/.env.example
+@@ -2,3 +2,4 @@ DATABASE_URL="postgresql://user:password@localhost:5432/shop"
+ NEXTAUTH_SECRET=""
+ STRIPE_SECRET_KEY=""
+ STRIPE_WEBHOOK_SECRET=""
++SHIPPING_API_KEY=""

@@ -1,0 +1,13 @@
+diff --git a/src/lib/stripe.test.ts b/src/lib/stripe.test.ts
+index 9f5eee1..37610be 100644
+--- a/src/lib/stripe.test.ts
++++ b/src/lib/stripe.test.ts
+@@ -5,4 +5,8 @@ describe("stripe", () => {
+   it("provides the checkout", () => {
+     expect(stripe.checkout).toBeDefined();
+   });
++
++  it("provides webhooks", () => {
++    expect(stripe.webhooks).toBeDefined();
++  });
+ });

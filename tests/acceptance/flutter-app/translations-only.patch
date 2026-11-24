@@ -1,0 +1,24 @@
+diff --git a/lib/l10n/app_de.arb b/lib/l10n/app_de.arb
+index 1903a94..174047e 100644
+--- a/lib/l10n/app_de.arb
++++ b/lib/l10n/app_de.arb
+@@ -1,5 +1,6 @@
+ {
+   "@@locale": "de",
+   "signIn": "Anmelden",
+-  "welcome": "Willkommen"
++  "welcome": "Willkommen",
++  "signOut": "Abmelden"
+ }
+diff --git a/lib/l10n/app_en.arb b/lib/l10n/app_en.arb
+index ed4ef52..89a4d81 100644
+--- a/lib/l10n/app_en.arb
++++ b/lib/l10n/app_en.arb
+@@ -1,5 +1,6 @@
+ {
+   "@@locale": "en",
+   "signIn": "Sign in",
+-  "welcome": "Welcome"
++  "welcome": "Welcome",
++  "signOut": "Sign out"
+ }

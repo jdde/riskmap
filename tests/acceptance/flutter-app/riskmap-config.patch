@@ -1,0 +1,13 @@
+diff --git a/.riskmap.yml b/.riskmap.yml
+index ec894fd..678c6c7 100644
+--- a/.riskmap.yml
++++ b/.riskmap.yml
+@@ -7,7 +7,7 @@ dimensions:
+   platform: { type: set }
+ 
+ # Whatever no rule matches is high. In this project that is, for example, `analysis_options.yaml` and `.gitignore`.
+-default: { risk: high }
++default: { risk: low }
+ 
+ rules:
+   - id: docs

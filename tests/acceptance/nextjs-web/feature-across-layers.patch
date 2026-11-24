@@ -1,0 +1,42 @@
+diff --git a/docs/architecture.md b/docs/architecture.md
+index 7f77732..da5c478 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -4,3 +4,4 @@
+ - `src/components`: reusable UI building blocks
+ - `src/lib`: auth, database, Stripe
+ - `prisma`: schema and migrations
++- Orders remember when they were shipped
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 17e66a8..ea408b8 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -16,4 +16,5 @@ model Order {
+   id        String  @id @default(cuid())
+   sessionId String  @unique
+   paid      Boolean @default(false)
++  shippedAt DateTime?
+ }
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 6c9b839..b593232 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -4,6 +4,7 @@ export default function HomePage() {
+   return (
+     <main>
+       <h1>Shop</h1>
++      <p>Ships in two days.</p>
+       <Button href="/checkout">Go to checkout</Button>
+     </main>
+   );
+diff --git a/src/lib/stripe.ts b/src/lib/stripe.ts
+index e588835..72c2a67 100644
+--- a/src/lib/stripe.ts
++++ b/src/lib/stripe.ts
+@@ -1,3 +1,5 @@
+ import Stripe from "stripe";
+ 
+-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
++export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
++  maxNetworkRetries: 2,
++});

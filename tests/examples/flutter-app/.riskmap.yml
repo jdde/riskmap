@@ -1,0 +1,91 @@
+# Riskmap for a Flutter app.
+version: 1
+
+dimensions:
+  domain:   { type: set }
+  # Which native platforms a change touches.
+  platform: { type: set }
+
+# Whatever no rule matches is high. In this project that is, for example, `analysis_options.yaml` and `.gitignore`.
+default: { risk: high }
+
+rules:
+  - id: docs
+    match: ["README.md"]
+    labels: { risk: low, domain: [docs] }
+    reason: "Documentation, no effect at runtime"
+
+  - id: tests
+    match: ["test/**", "integration_test/**"]
+    labels: { risk: low, domain: [tests] }
+    reason: "Tests are not shipped"
+
+  - id: l10n
+    match: ["lib/l10n/**", "l10n.yaml"]
+    labels: { risk: low, domain: [l10n] }
+    reason: "Translation texts"
+
+  - id: assets
+    match: ["assets/**"]
+    labels: { risk: low, domain: [assets] }
+    reason: "Images and static files"
+
+  # Without `except` the translations under `lib/l10n/` would be medium.
+  - id: app
+    match: ["lib/**"]
+    except: ["lib/l10n/**"]
+    labels: { risk: medium, domain: [app] }
+    reason: "Dart code of the app without a special classification"
+
+  - id: ui
+    match: ["lib/widgets/**", "lib/features/**/*_screen.dart"]
+    labels: { risk: medium, domain: [ui] }
+    reason: "Visible user interface"
+
+  - id: auth
+    match: ["lib/features/**/auth_*.dart"]
+    labels: { risk: high, domain: [auth] }
+    reason: "Sign-in and token handling"
+
+  - id: payments
+    match: ["lib/features/payments/**"]
+    labels: { risk: high, domain: [payments] }
+    reason: "In-app purchases"
+
+  - id: android
+    match: ["android/**"]
+    labels: { risk: high, domain: [native], platform: [android] }
+    reason: "Permissions, signing and build of the Android app"
+
+  - id: ios
+    match: ["ios/**"]
+    labels: { risk: high, domain: [native], platform: [ios] }
+    reason: "Permissions, signing and build of the iOS app"
+
+  - id: build
+    match: ["pubspec.yaml", "pubspec.lock"]
+    labels: { risk: high, domain: [build] }
+    reason: "Dependencies and version number of the app"
+
+  - id: ci
+    match: [".github/**"]
+    labels: { risk: high, domain: [ci] }
+    reason: "CI and gates must not loosen themselves"
+
+tests:
+  - path: "lib/l10n/app_de.arb"
+    expect: { risk: low, domain: [l10n] }
+  - path: "lib/widgets/primary_button.dart"
+    expect: { risk: medium, domain: [app, ui] }
+  - path: "lib/features/login/login_screen.dart"
+    expect: { risk: medium, domain: [app, ui] }
+  - path: "lib/features/login/auth_service.dart"
+    expect: { risk: high, domain: [app, auth] }
+  - path: "android/app/src/main/AndroidManifest.xml"
+    expect: { risk: high, platform: [android] }
+  - path: "ios/Runner/Info.plist"
+    expect: { risk: high, platform: [ios] }
+  - path: "test/features/login/auth_service_test.dart"   # a test, not the rule `auth`
+    expect: { risk: low, domain: [tests] }
+  - path: "library/main.dart"                            # near miss: not lib/
+    expect: { risk: high, domain: [] }

@@ -1,0 +1,19 @@
+diff --git a/README.md b/README.md
+index a11ce2d..e262bb9 100644
+--- a/README.md
++++ b/README.md
+@@ -4,3 +4,5 @@ Example project for Riskmap: a small mobile app built with Flutter (login, home
+ 
+ The project is only a skeleton. It shows the structure Flutter prescribes and does not run.
+ The risk classification is in `.riskmap.yml`.
++
++The logo is in `assets/images/`.
+diff --git a/assets/images/logo.png b/assets/images/logo.png
+index 613754cfaf74a7a2d86984231479d5671731f18a..145a07dbcb5cf07a4a8560492854177f3d6ce292 100644
+GIT binary patch
+delta 33
+mcmZ>Bo1i5#CpiHK7#J8>85oy-b9Df+7(8A5T-G@yGywpY^9cF?
+
+delta 33
+ncmZ>Bo1i6gD>)_MM?60RQ#)hBYxiA~7=Xaj)z4*}Q$iB}#gq#~
+

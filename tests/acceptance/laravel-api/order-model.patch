@@ -1,0 +1,13 @@
+diff --git a/app/Models/Order.php b/app/Models/Order.php
+index 5c6a06d..f4474f3 100644
+--- a/app/Models/Order.php
++++ b/app/Models/Order.php
+@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
+ 
+ class Order extends Model
+ {
+-    protected $fillable = ['total_cents'];
++    protected $fillable = ['total_cents', 'status'];
+ 
+     public function user()
+     {

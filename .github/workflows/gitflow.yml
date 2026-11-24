@@ -1,0 +1,42 @@
+name: Gitflow
+
+# Checks that a pull request goes from the right kind of branch into the right
+# target. The rules are described in CONTRIBUTING.md.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+permissions: {}
+
+jobs:
+  branches:
+    name: Branch rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source and target branch
+        # The names come in as environment variables and never as part of the
+        # script text: a branch name is chosen by the author of the pull
+        # request and must not be able to run commands here.
+        env:
+          HEAD: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          allowed=""
+          case "$BASE" in
+            main)      allowed="release/* hotfix/*" ;;
+            develop)   allowed="feature/* bugfix/* release/* hotfix/*" ;;
+            release/*) allowed="bugfix/*" ;;
+            hotfix/*)  allowed="bugfix/*" ;;
+            feature/*) allowed="feature/* bugfix/*" ;;
+            *)
+              echo "::error::\"$BASE\" is not a branch of the gitflow model. Target main, develop, release/*, hotfix/* or feature/*."
+              exit 1 ;;
+          esac
+          for pattern in $allowed; do
+            # shellcheck disable=SC2254
+            case "$HEAD" in
+              $pattern) echo "ok: $HEAD -> $BASE"; exit 0 ;;
+            esac
+          done
+          echo "::error::A pull request into \"$BASE\" must come from: $allowed. This one comes from \"$HEAD\". See CONTRIBUTING.md."
+          exit 1

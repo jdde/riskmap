@@ -1,0 +1,13 @@
+diff --git a/src/app/(shop)/checkout/page.tsx b/src/app/(shop)/checkout/page.tsx
+index cdc3331..2159ca4 100644
+--- a/src/app/(shop)/checkout/page.tsx
++++ b/src/app/(shop)/checkout/page.tsx
+@@ -5,7 +5,7 @@ export default function CheckoutPage() {
+     <main>
+       <h1>Checkout</h1>
+       <form action="/api/checkout" method="post">
+-        <Button type="submit">Pay now</Button>
++        <Button type="submit">Order and pay</Button>
+       </form>
+     </main>
+   );

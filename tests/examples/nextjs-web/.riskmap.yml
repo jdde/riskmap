@@ -1,0 +1,83 @@
+# Riskmap for a Next.js application (App Router) with Prisma, NextAuth and Stripe.
+version: 1
+
+dimensions:
+  domain:    { type: set }
+  protected: { type: flag }
+
+# Whatever no rule matches is high. In this project that is, for example, `.gitignore` and `.env.example`.
+default: { risk: high }
+
+rules:
+  - id: docs
+    match: ["docs/**", "README.md"]
+    labels: { risk: low, domain: [docs] }
+    reason: "Documentation, no effect at runtime"
+
+  - id: tests
+    match: ["src/**/*.test.ts", "src/**/*.test.tsx"]
+    labels: { risk: low, domain: [tests] }
+    reason: "Tests only check the code next to them"
+
+  # Without `except`, `src/components/Button.test.tsx` would be medium:
+  # when several rules match, the higher value wins.
+  - id: ui
+    match:
+      - "src/components/**"
+      - "src/app/**/page.tsx"
+      - "src/app/**/layout.tsx"
+      - "src/app/**/*.css"
+      - "public/**"
+    except: ["src/**/*.test.tsx"]
+    labels: { risk: medium, domain: [ui] }
+    reason: "Visible user interface, mistakes show up in the browser"
+
+  - id: auth
+    match: ["src/lib/auth.ts", "src/app/api/auth/**", "src/middleware.ts"]
+    labels: { risk: high, domain: [auth] }
+    reason: "Sign-in and access protection"
+
+  # The checkout page also matches the rule `ui`. Result: high, domain [payments, ui].
+  - id: payments
+    match:
+      - "src/lib/stripe.ts"
+      - "src/app/api/checkout/**"
+      - "src/app/api/webhooks/**"
+      - "src/app/(shop)/checkout/**"
+    labels: { risk: high, domain: [payments] }
+    reason: "Payment flow and incoming webhooks"
+
+  - id: database
+    match: ["prisma/**", "src/lib/db.ts"]
+    labels: { risk: high, domain: [data] }
+    reason: "Schema and migrations change stored data"
+
+  - id: build
+    match: ["package.json", "package-lock.json", "next.config.ts", "tsconfig.json"]
+    labels: { risk: high, domain: [build] }
+    reason: "Dependencies and build configuration affect the whole application"
+
+  - id: ci
+    match: [".github/**"]
+    labels: { risk: high, domain: [ci], protected: true }
+    reason: "CI and gates must not loosen themselves"
+
+tests:
+  - path: "docs/architecture.md"
+    expect: { risk: low, domain: [docs] }
+  - path: "src/components/Button.tsx"
+    expect: { risk: medium, domain: [ui] }
+  - path: "src/components/Button.test.tsx"
+    expect: { risk: low, domain: [tests] }
+  - path: "src/lib/stripe.test.ts"     # test next to a high file, does not match `payments`
+    expect: { risk: low, domain: [tests] }
+  - path: "src/app/(shop)/checkout/page.tsx"
+    expect: { risk: high, domain: [payments, ui] }
+  - path: "src/app/api/auth/[...nextauth]/route.ts"
+    expect: { risk: high, domain: [auth] }
+  - path: ".github/workflows/ci.yml"
+    expect: { risk: high, protected: true }
+  - path: "docs2/readme.md"            # near miss: not docs/
+    expect: { risk: high }
+  - path: "packages/web/package.json"  # a pattern without `/` applies only in the root
+    expect: { risk: high, domain: [] }

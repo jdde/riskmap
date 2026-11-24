@@ -1,0 +1,160 @@
+# Expected results for tests/examples/flutter-app. Format: see tests/README.md.
+example: flutter-app
+
+files:
+  ".github/workflows/build.yml":                 { risk: high,   domain: [ci],            platform: [] }
+  ".gitignore":                                  { risk: high,   domain: [],              platform: [] }
+  ".riskmap.yml":                                { risk: high,   domain: [],              platform: [] }
+  "README.md":                                   { risk: low,    domain: [docs],          platform: [] }
+  "analysis_options.yaml":                       { risk: high,   domain: [],              platform: [] }
+  "android/app/build.gradle.kts":                { risk: high,   domain: [native],        platform: [android] }
+  "android/app/src/main/AndroidManifest.xml":    { risk: high,   domain: [native],        platform: [android] }
+  "assets/images/logo.png":                      { risk: low,    domain: [assets],        platform: [] }
+  "integration_test/app_test.dart":              { risk: low,    domain: [tests],         platform: [] }
+  "ios/Podfile":                                 { risk: high,   domain: [native],        platform: [ios] }
+  "ios/Runner/AppDelegate.swift":                { risk: high,   domain: [native],        platform: [ios] }
+  "ios/Runner/Info.plist":                       { risk: high,   domain: [native],        platform: [ios] }
+  "l10n.yaml":                                   { risk: low,    domain: [l10n],          platform: [] }
+  "lib/app.dart":                                { risk: medium, domain: [app],           platform: [] }
+  "lib/features/home/home_screen.dart":          { risk: medium, domain: [app, ui],       platform: [] }
+  "lib/features/login/auth_service.dart":        { risk: high,   domain: [app, auth],     platform: [] }
+  "lib/features/login/login_screen.dart":        { risk: medium, domain: [app, ui],       platform: [] }
+  "lib/features/payments/purchase_service.dart": { risk: high,   domain: [app, payments], platform: [] }
+  "lib/l10n/app_de.arb":                         { risk: low,    domain: [l10n],          platform: [] }
+  "lib/l10n/app_en.arb":                         { risk: low,    domain: [l10n],          platform: [] }
+  "lib/main.dart":                               { risk: medium, domain: [app],           platform: [] }
+  "lib/widgets/primary_button.dart":             { risk: medium, domain: [app, ui],       platform: [] }
+  "pubspec.lock":                                { risk: high,   domain: [build],         platform: [] }
+  "pubspec.yaml":                                { risk: high,   domain: [build],         platform: [] }
+  "test/features/login/auth_service_test.dart":  { risk: low,    domain: [tests],         platform: [] }
+  "test/widget_test.dart":                       { risk: low,    domain: [tests],         platform: [] }
+
+changes:
+  - id: translations-only
+    patch: "flutter-app/translations-only.patch"
+    description: "Translations only: the exception in the rule app keeps them low"
+    paths: ["lib/l10n/app_de.arb", "lib/l10n/app_en.arb"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [l10n], platform: [] }
+
+  - id: assets-and-docs
+    patch: "flutter-app/assets-and-docs.patch"
+    description: "Image and README"
+    paths: ["assets/images/logo.png", "README.md"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [assets, docs], platform: [] }
+
+  - id: screen-with-test
+    patch: "flutter-app/screen-with-test.patch"
+    description: "Screen, widget and test"
+    paths:
+      - "lib/features/home/home_screen.dart"
+      - "lib/widgets/primary_button.dart"
+      - "test/widget_test.dart"
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [app, tests, ui], platform: [] }
+
+  - id: app-shell
+    patch: "flutter-app/app-shell.patch"
+    description: "Routes of the app: ordinary Dart code"
+    paths: ["lib/app.dart"]
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [app], platform: [] }
+
+  - id: auth-service
+    patch: "flutter-app/auth-service.patch"
+    description: "A broad lenient rule (app) and a narrow strict rule (auth) match the same file"
+    paths: ["lib/features/login/auth_service.dart"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [app, auth], platform: [] }
+
+  - id: auth-test-only
+    patch: "flutter-app/auth-test-only.patch"
+    description: "The test for the auth service does not match the rule auth"
+    paths: ["test/features/login/auth_service_test.dart"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [tests], platform: [] }
+
+  - id: android-only
+    patch: "flutter-app/android-only.patch"
+    description: "Android only"
+    paths: ["android/app/src/main/AndroidManifest.xml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [native], platform: [android] }
+
+  - id: both-platforms
+    patch: "flutter-app/both-platforms.patch"
+    description: "The second set dimension is united across files"
+    paths: ["android/app/build.gradle.kts", "ios/Runner/Info.plist"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [native], platform: [android, ios] }
+
+  - id: purchase-feature
+    patch: "flutter-app/purchase-feature.patch"
+    description: "In-app purchase with a permission in the manifest and a new dependency"
+    paths:
+      - "lib/features/payments/purchase_service.dart"
+      - "android/app/src/main/AndroidManifest.xml"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+    expect:
+      status: ok
+      labels: { risk: high, domain: [app, build, native, payments], platform: [android] }
+
+  - id: unmatched-file
+    patch: "flutter-app/unmatched-file.patch"
+    description: "No match: the default applies"
+    paths: ["analysis_options.yaml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], platform: [] }
+
+  - id: near-miss
+    patch: "flutter-app/near-miss.patch"
+    description: "Near misses stay at the default"
+    paths: ["library/main.dart", "tests/widget_test.dart", "packages/core/pubspec.yaml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], platform: [] }
+
+  - id: rename-auth-to-test
+    patch: "flutter-app/rename-auth-to-test.patch"
+    description: "Rename from lib/features/login/auth_service.dart to test/auth_service.dart: both the old and the new path count"
+    paths: ["lib/features/login/auth_service.dart", "test/auth_service.dart"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [app, auth, tests], platform: [] }
+
+  - id: riskmap-config
+    patch: "flutter-app/riskmap-config.patch"
+    description: "Self-protection: the rule file is fixed at the strictest level"
+    paths: [".riskmap.yml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], platform: [] }
+
+  - id: empty-change
+    description: "An empty path set yields the default, never the lowest level"
+    paths: []
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], platform: [] }
+
+  - id: incomplete-input
+    description: "An incomplete path set yields the strictest result"
+    paths: ["README.md"]
+    complete: false
+    expect:
+      status: incomplete
+      labels:
+        risk: high
+        domain: [app, assets, auth, build, ci, docs, l10n, native, payments, tests, ui]
+        platform: [android, ios]

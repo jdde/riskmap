@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jdde/riskmap/main/schema/result.schema.json",
+  "title": "Riskmap result",
+  "description": "Output of \"riskmap classify\" and \"riskmap check --format json\". Later versions may add fields; ignore fields you do not know.",
+  "type": "object",
+  "required": [
+    "riskmap",
+    "status"
+  ],
+  "properties": {
+    "riskmap": {
+      "description": "Version of this format.",
+      "const": 1
+    },
+    "status": {
+      "description": "\"ok\": classified. \"incomplete\": the list of paths was incomplete, the labels are the strictest ones. \"no-config\" and \"invalid-config\": there are no labels; treat this like the strictest level.",
+      "enum": [
+        "ok",
+        "incomplete",
+        "no-config",
+        "invalid-config"
+      ]
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "dimensions": {
+      "$ref": "#/$defs/dimensions"
+    },
+    "labels": {
+      "description": "Result for the whole change.",
+      "$ref": "#/$defs/labels"
+    },
+    "because": {
+      "description": "Reasons that belong to the change as a whole: \"empty-change\" or \"incomplete-input\".",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/because"
+      }
+    },
+    "paths": {
+      "description": "One entry per changed path, sorted by the bytes of the path.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "labels",
+          "because"
+        ],
+        "properties": {
+          "path": {
+            "description": "Relative to the directory of the rule file, with \"/\".",
+            "type": "string"
+          },
+          "path_base64": {
+            "description": "Only for a path that is not valid UTF-8: its exact bytes in base64. \"path\" then has U+FFFD in place of the invalid bytes.",
+            "type": "string"
+          },
+          "labels": {
+            "$ref": "#/$defs/labels"
+          },
+          "because": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/because"
+            }
+          }
+        }
+      }
+    },
+    "errors": {
+      "$ref": "#/$defs/errors"
+    },
+    "check": {
+      "description": "Only from \"riskmap check\": the verdict of the gate.",
+      "type": "object",
+      "required": [
+        "fail_on",
+        "passed",
+        "failing_paths"
+      ],
+      "properties": {
+        "fail_on": {
+          "description": "The value of --fail-on.",
+          "type": "string"
+        },
+        "passed": {
+          "description": "True exactly when the exit code is 0.",
+          "type": "boolean"
+        },
+        "failing_paths": {
+          "description": "Number of paths at or above fail_on. Can be 0 although passed is false: an empty or incomplete change, or no usable rule file.",
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "incomplete"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "policy",
+          "dimensions",
+          "labels",
+          "paths"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "invalid-config"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "policy",
+          "errors"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "policy": {
+      "description": "Where the rules were read from.",
+      "type": "object",
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "ref": {
+          "description": "Git commit the rule files were read from. Missing when they were read from the working directory.",
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "sha256": {
+                "description": "SHA-256 of the file content, hexadecimal.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dimensions": {
+      "description": "The dimensions the rule file declares, by name. Use \"values\" to compare levels of an ordered dimension.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "ordered",
+              "set",
+              "flag"
+            ]
+          },
+          "values": {
+            "description": "Only for \"ordered\": the allowed values, mildest first.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "labels": {
+      "description": "Label values by dimension name. A set and a flag are always present; an ordered dimension only if it has a value. \"risk\" always has one.",
+      "type": "object",
+      "required": [
+        "risk"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/value"
+      }
+    },
+    "value": {
+      "description": "Text for an ordered dimension, a sorted list of words for a set, true or false for a flag.",
+      "type": [
+        "string",
+        "array",
+        "boolean"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "because": {
+      "description": "One reason for a result.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "rule",
+            "default",
+            "builtin",
+            "empty-change",
+            "incomplete-input",
+            "unreadable-path"
+          ]
+        },
+        "config": {
+          "description": "Rule file the rule comes from.",
+          "type": "string"
+        },
+        "rule": {
+          "description": "Id of the rule, or its index in the list if it has none.",
+          "type": "string"
+        },
+        "glob": {
+          "description": "The glob of the rule that matched.",
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "errors": {
+      "description": "With status \"invalid-config\": every problem of the rule file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "message"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "description": "Starts at 1. Missing if the problem has no position.",
+            "type": "integer"
+          },
+          "column": {
+            "description": "Starts at 1.",
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

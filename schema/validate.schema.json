@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jdde/riskmap/main/schema/validate.schema.json",
+  "title": "Riskmap validation",
+  "description": "Output of \"riskmap validate --format json\". Later versions may add fields; ignore fields you do not know.",
+  "type": "object",
+  "required": [
+    "riskmap",
+    "status"
+  ],
+  "properties": {
+    "riskmap": {
+      "description": "Version of this format.",
+      "const": 1
+    },
+    "status": {
+      "description": "\"ok\": the rule file is valid and its tests pass. \"tests-failed\": valid, but at least one test fails. \"no-config\": there is no rule file. \"invalid-config\": see \"errors\".",
+      "enum": [
+        "ok",
+        "tests-failed",
+        "no-config",
+        "invalid-config"
+      ]
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "dimensions": {
+      "$ref": "#/$defs/dimensions"
+    },
+    "rules": {
+      "description": "Number of rules.",
+      "type": "integer"
+    },
+    "tests": {
+      "type": "object",
+      "required": [
+        "total",
+        "failed"
+      ],
+      "properties": {
+        "total": {
+          "description": "Number of entries in the \"tests\" block.",
+          "type": "integer"
+        },
+        "failed": {
+          "description": "One entry per expectation that does not hold. One test can appear several times, once per dimension.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "file",
+              "line",
+              "path",
+              "dimension",
+              "expected",
+              "actual"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "description": "Line of the test in the rule file.",
+                "type": "integer"
+              },
+              "path": {
+                "description": "The path the test classifies.",
+                "type": "string"
+              },
+              "dimension": {
+                "type": "string"
+              },
+              "expected": {
+                "$ref": "#/$defs/value"
+              },
+              "actual": {
+                "$ref": "#/$defs/value"
+              }
+            }
+          }
+        }
+      }
+    },
+    "errors": {
+      "$ref": "#/$defs/errors"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "tests-failed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "policy",
+          "dimensions",
+          "rules",
+          "tests"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "invalid-config"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "policy",
+          "errors"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "policy": {
+      "description": "Where the rules were read from.",
+      "type": "object",
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "ref": {
+          "description": "Git commit the rule files were read from. Missing when they were read from the working directory.",
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "sha256": {
+                "description": "SHA-256 of the file content, hexadecimal.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dimensions": {
+      "description": "The dimensions the rule file declares, by name. Use \"values\" to compare levels of an ordered dimension.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "ordered",
+              "set",
+              "flag"
+            ]
+          },
+          "values": {
+            "description": "Only for \"ordered\": the allowed values, mildest first.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "value": {
+      "description": "Text for an ordered dimension, a sorted list of words for a set, true or false for a flag. null for an ordered dimension without a value.",
+      "type": [
+        "string",
+        "array",
+        "boolean",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "errors": {
+      "description": "With status \"invalid-config\": every problem of the rule file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "message"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "description": "Starts at 1. Missing if the problem has no position.",
+            "type": "integer"
+          },
+          "column": {
+            "description": "Starts at 1.",
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+diff --git a/README.md b/README.md
+index 437550c..9054b7d 100644
+--- a/README.md
++++ b/README.md
+@@ -4,3 +4,7 @@ Example project for Riskmap: a small order API built with Laravel.
+ 
+ The project is only a skeleton. It shows the structure Laravel prescribes and does not run.
+ The risk classification is in `.riskmap.yml`.
++
++## Tests
++
++`php artisan test`
+diff --git a/docs/api.md b/docs/api.md
+index d095cfb..e6f161a 100644
+--- a/docs/api.md
++++ b/docs/api.md
+@@ -5,3 +5,4 @@
+ | POST | `/api/login` | get a token |
+ | GET | `/api/orders` | your own orders |
+ | POST | `/api/orders` | create an order |
++| GET | `/api/orders/{id}` | a single order |

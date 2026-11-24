@@ -1,0 +1,26 @@
+diff --git a/database/factories/UserFactory.php b/database/factories/UserFactory.php
+index 9e74c85..29eb9db 100644
+--- a/database/factories/UserFactory.php
++++ b/database/factories/UserFactory.php
+@@ -13,6 +13,7 @@ class UserFactory extends Factory
+             'name' => fake()->name(),
+             'email' => fake()->unique()->safeEmail(),
+             'password' => Hash::make('password'),
++            'tenant_id' => 1,
+         ];
+     }
+ }
+diff --git a/tests/Feature/OrderTest.php b/tests/Feature/OrderTest.php
+index 057ee18..5ae9791 100644
+--- a/tests/Feature/OrderTest.php
++++ b/tests/Feature/OrderTest.php
+@@ -18,4 +18,9 @@ class OrderTest extends TestCase
+             ->postJson('/api/orders', ['total_cents' => 1000])
+             ->assertCreated();
+     }
++
++    public function test_a_guest_cannot_list_orders(): void
++    {
++        $this->getJson('/api/orders')->assertUnauthorized();
++    }
+ }

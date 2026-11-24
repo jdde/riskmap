@@ -1,0 +1,36 @@
+diff --git a/lib/features/home/home_screen.dart b/lib/features/home/home_screen.dart
+index e069f8c..62e12d1 100644
+--- a/lib/features/home/home_screen.dart
++++ b/lib/features/home/home_screen.dart
+@@ -5,6 +5,6 @@ class HomeScreen extends StatelessWidget {
+ 
+   @override
+   Widget build(BuildContext context) {
+-    return const Scaffold(body: Center(child: Text('Welcome')));
++    return const Scaffold(body: Center(child: Text('Welcome back')));
+   }
+ }
+diff --git a/lib/widgets/primary_button.dart b/lib/widgets/primary_button.dart
+index 35d2742..97e98c7 100644
+--- a/lib/widgets/primary_button.dart
++++ b/lib/widgets/primary_button.dart
+@@ -8,6 +8,6 @@ class PrimaryButton extends StatelessWidget {
+ 
+   @override
+   Widget build(BuildContext context) {
+-    return FilledButton(onPressed: onPressed, child: Text(label));
++    return FilledButton(onPressed: onPressed, child: Text(label.toUpperCase()));
+   }
+ }
+diff --git a/test/widget_test.dart b/test/widget_test.dart
+index b092e88..d26425a 100644
+--- a/test/widget_test.dart
++++ b/test/widget_test.dart
+@@ -7,6 +7,6 @@ void main() {
+     await tester.pumpWidget(
+       MaterialApp(home: PrimaryButton(label: 'Go', onPressed: () {})),
+     );
+-    expect(find.text('Go'), findsOneWidget);
++    expect(find.text('GO'), findsOneWidget);
+   });
+ }

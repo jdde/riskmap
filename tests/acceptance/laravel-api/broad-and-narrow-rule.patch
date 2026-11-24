@@ -1,0 +1,13 @@
+diff --git a/app/Services/Billing/InvoiceService.php b/app/Services/Billing/InvoiceService.php
+index 8a63810..1c5fa91 100644
+--- a/app/Services/Billing/InvoiceService.php
++++ b/app/Services/Billing/InvoiceService.php
+@@ -11,7 +11,7 @@ class InvoiceService
+         return [
+             'order_id' => $order->id,
+             'net_cents' => $order->total_cents,
+-            'tax_cents' => (int) round($order->total_cents * 0.19),
++            'tax_cents' => (int) round($order->total_cents * 0.07),
+         ];
+     }
+ }

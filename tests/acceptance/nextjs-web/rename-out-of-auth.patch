@@ -1,0 +1,4 @@
+diff --git a/src/lib/auth.ts b/docs/auth.md
+similarity index 100%
+rename from src/lib/auth.ts
+rename to docs/auth.md

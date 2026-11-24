@@ -1,0 +1,176 @@
+# Expected results for tests/examples/laravel-api. Format: see tests/README.md.
+example: laravel-api
+
+files:
+  ".env.example":                                   { risk: high,   domain: [],              irreversible: false }
+  ".github/workflows/tests.yml":                    { risk: high,   domain: [ci],            irreversible: false }
+  ".gitignore":                                     { risk: high,   domain: [],              irreversible: false }
+  ".riskmap.yml":                                   { risk: high,   domain: [],              irreversible: true,  data: personal }
+  "README.md":                                      { risk: low,    domain: [docs],          irreversible: false }
+  "app/Http/Controllers/Auth/LoginController.php":  { risk: high,   domain: [app, auth],     irreversible: false }
+  "app/Http/Controllers/Controller.php":            { risk: medium, domain: [app],           irreversible: false }
+  "app/Http/Controllers/OrderController.php":       { risk: medium, domain: [app],           irreversible: false }
+  "app/Http/Middleware/EnsureTenant.php":           { risk: high,   domain: [app, auth],     irreversible: false }
+  "app/Models/Order.php":                           { risk: medium, domain: [app, data],     irreversible: false, data: internal }
+  "app/Models/User.php":                            { risk: high,   domain: [app, data],     irreversible: false, data: personal }
+  "app/Policies/OrderPolicy.php":                   { risk: high,   domain: [app, auth],     irreversible: false }
+  "app/Providers/AppServiceProvider.php":           { risk: medium, domain: [app],           irreversible: false }
+  "app/Services/Billing/InvoiceService.php":        { risk: high,   domain: [app, billing],  irreversible: false }
+  "artisan":                                        { risk: high,   domain: [runtime],       irreversible: false }
+  "bootstrap/app.php":                              { risk: high,   domain: [runtime],       irreversible: false }
+  "bootstrap/providers.php":                        { risk: high,   domain: [runtime],       irreversible: false }
+  "composer.json":                                  { risk: high,   domain: [build],         irreversible: false }
+  "composer.lock":                                  { risk: high,   domain: [build],         irreversible: false }
+  "config/app.php":                                 { risk: high,   domain: [runtime],       irreversible: false }
+  "config/auth.php":                                { risk: high,   domain: [auth, runtime], irreversible: false }
+  "config/database.php":                            { risk: high,   domain: [runtime],       irreversible: false }
+  "database/factories/UserFactory.php":             { risk: low,    domain: [tests],         irreversible: false }
+  "database/migrations/0001_01_01_000000_create_users_table.php":  { risk: high, domain: [data], irreversible: true, data: personal }
+  "database/migrations/2026_01_15_000000_create_orders_table.php": { risk: high, domain: [data], irreversible: true, data: internal }
+  "database/seeders/DatabaseSeeder.php":            { risk: medium, domain: [data],          irreversible: false }
+  "docs/api.md":                                    { risk: low,    domain: [docs],          irreversible: false }
+  "phpunit.xml":                                    { risk: high,   domain: [],              irreversible: false }
+  "public/index.php":                               { risk: high,   domain: [runtime],       irreversible: false }
+  "resources/views/welcome.blade.php":              { risk: medium, domain: [ui],            irreversible: false }
+  "routes/api.php":                                 { risk: high,   domain: [api],           irreversible: false }
+  "routes/console.php":                             { risk: high,   domain: [api],           irreversible: false }
+  "routes/web.php":                                 { risk: high,   domain: [api],           irreversible: false }
+  "tests/Feature/OrderTest.php":                    { risk: low,    domain: [tests],         irreversible: false }
+  "tests/TestCase.php":                             { risk: low,    domain: [tests],         irreversible: false }
+  "tests/Unit/InvoiceServiceTest.php":              { risk: low,    domain: [tests],         irreversible: false }
+
+changes:
+  - id: docs-only
+    patch: "laravel-api/docs-only.patch"
+    description: "Documentation only"
+    paths: ["README.md", "docs/api.md"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [docs], irreversible: false }
+
+  - id: tests-only
+    patch: "laravel-api/tests-only.patch"
+    description: "Tests and factory"
+    paths: ["tests/Feature/OrderTest.php", "database/factories/UserFactory.php"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [tests], irreversible: false }
+
+  - id: deleted-test
+    patch: "laravel-api/deleted-test.patch"
+    description: "A deleted file counts through its path. Riskmap does not see that a test disappears here"
+    paths: ["tests/Unit/InvoiceServiceTest.php"]
+    expect:
+      status: ok
+      labels: { risk: low, domain: [tests], irreversible: false }
+
+  - id: controller-with-test
+    patch: "laravel-api/controller-with-test.patch"
+    description: "Ordinary application code with a test"
+    paths: ["app/Http/Controllers/OrderController.php", "tests/Feature/OrderTest.php"]
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [app, tests], irreversible: false }
+
+  - id: view-and-seeder
+    patch: "laravel-api/view-and-seeder.patch"
+    description: "View and seeder"
+    paths: ["resources/views/welcome.blade.php", "database/seeders/DatabaseSeeder.php"]
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [data, ui], irreversible: false }
+
+  - id: broad-and-narrow-rule
+    patch: "laravel-api/broad-and-narrow-rule.patch"
+    description: "A broad lenient rule (app) and a narrow strict rule (billing) match the same file"
+    paths: ["app/Services/Billing/InvoiceService.php"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [app, billing], irreversible: false }
+
+  - id: order-model
+    patch: "laravel-api/order-model.patch"
+    description: "Custom ordered dimension: internal data"
+    paths: ["app/Models/Order.php"]
+    expect:
+      status: ok
+      labels: { risk: medium, domain: [app, data], irreversible: false, data: internal }
+
+  - id: models-together
+    patch: "laravel-api/models-together.patch"
+    description: "Ordered dimension across several files: the highest value wins"
+    paths: ["app/Models/Order.php", "app/Models/User.php"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [app, data], irreversible: false, data: personal }
+
+  - id: new-migration
+    patch: "laravel-api/new-migration.patch"
+    description: "A new migration that does not exist in the project yet"
+    paths: ["database/migrations/2026_03_01_000000_add_status_to_orders_table.php"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [data], irreversible: true, data: internal }
+
+  - id: feature-with-migration
+    patch: "laravel-api/feature-with-migration.patch"
+    description: "Controller, route, migration and test in one change"
+    paths:
+      - "app/Http/Controllers/OrderController.php"
+      - "routes/api.php"
+      - "database/migrations/2026_01_15_000000_create_orders_table.php"
+      - "tests/Feature/OrderTest.php"
+    expect:
+      status: ok
+      labels: { risk: high, domain: [api, app, data, tests], irreversible: true, data: internal }
+
+  - id: unmatched-file
+    patch: "laravel-api/unmatched-file.patch"
+    description: "No match: the default applies"
+    paths: ["phpunit.xml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], irreversible: false }
+
+  - id: near-miss
+    patch: "laravel-api/near-miss.patch"
+    description: "Near misses stay at the default"
+    paths: ["application/Models/User.php", "tests2/OrderTest.php", "packages/billing/composer.json"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], irreversible: false }
+
+  - id: rename-policy-to-docs
+    patch: "laravel-api/rename-policy-to-docs.patch"
+    description: "Rename from app/Policies/OrderPolicy.php to docs/policy.md: both the old and the new path count"
+    paths: ["app/Policies/OrderPolicy.php", "docs/policy.md"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [app, auth, docs], irreversible: false }
+
+  - id: riskmap-config
+    patch: "laravel-api/riskmap-config.patch"
+    description: "Self-protection: the strictest value in every ordered and flag dimension"
+    paths: [".riskmap.yml"]
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], irreversible: true, data: personal }
+
+  - id: empty-change
+    description: "An empty path set yields the default, never the lowest level"
+    paths: []
+    expect:
+      status: ok
+      labels: { risk: high, domain: [], irreversible: false }
+
+  - id: incomplete-input
+    description: "An incomplete path set yields the strictest result"
+    paths: ["README.md"]
+    complete: false
+    expect:
+      status: incomplete
+      labels:
+        risk: high
+        domain: [api, app, auth, billing, build, ci, data, docs, runtime, tests, ui]
+        irreversible: true
+        data: personal

@@ -1,0 +1,13 @@
+diff --git a/test/features/login/auth_service_test.dart b/test/features/login/auth_service_test.dart
+index e50b8de..190db8b 100644
+--- a/test/features/login/auth_service_test.dart
++++ b/test/features/login/auth_service_test.dart
+@@ -6,4 +6,8 @@ void main() {
+     final service = AuthService()..signOut();
+     expect(service.isSignedIn, isFalse);
+   });
++
++  test('is signed out at first', () {
++    expect(AuthService().isSignedIn, isFalse);
++  });
+ }

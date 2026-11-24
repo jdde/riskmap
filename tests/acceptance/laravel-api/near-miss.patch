@@ -1,0 +1,33 @@
+diff --git a/application/Models/User.php b/application/Models/User.php
+new file mode 100644
+index 0000000..afdffea
+--- /dev/null
++++ b/application/Models/User.php
+@@ -0,0 +1,7 @@
++<?php
++
++namespace Application\Models;
++
++class User
++{
++}
+diff --git a/packages/billing/composer.json b/packages/billing/composer.json
+new file mode 100644
+index 0000000..956883a
+--- /dev/null
++++ b/packages/billing/composer.json
+@@ -0,0 +1,3 @@
++{
++    "name": "example/billing"
++}
+diff --git a/tests2/OrderTest.php b/tests2/OrderTest.php
+new file mode 100644
+index 0000000..921e4ce
+--- /dev/null
++++ b/tests2/OrderTest.php
+@@ -0,0 +1,5 @@
++<?php
++
++class OrderTest
++{
++}

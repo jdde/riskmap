@@ -1,0 +1,21 @@
+diff --git a/library/main.dart b/library/main.dart
+new file mode 100644
+index 0000000..ab73b3a
+--- /dev/null
++++ b/library/main.dart
+@@ -0,0 +1 @@
++void main() {}
+diff --git a/packages/core/pubspec.yaml b/packages/core/pubspec.yaml
+new file mode 100644
+index 0000000..dc0b27e
+--- /dev/null
++++ b/packages/core/pubspec.yaml
+@@ -0,0 +1 @@
++name: core
+diff --git a/tests/widget_test.dart b/tests/widget_test.dart
+new file mode 100644
+index 0000000..ab73b3a
+--- /dev/null
++++ b/tests/widget_test.dart
+@@ -0,0 +1 @@
++void main() {}

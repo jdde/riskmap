@@ -1,0 +1,25 @@
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 8918857..e214940 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -7,3 +7,7 @@ body {
+   color: var(--foreground);
+   background: var(--background);
+ }
++
++.title {
++  font-size: 2rem;
++}
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 6c9b839..54f9d6a 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -3,7 +3,7 @@ import { Button } from "@/components/Button";
+ export default function HomePage() {
+   return (
+     <main>
+-      <h1>Shop</h1>
++      <h1 className="title">Shop</h1>
+       <Button href="/checkout">Go to checkout</Button>
+     </main>
+   );

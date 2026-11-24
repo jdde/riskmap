@@ -1,0 +1,28 @@
+diff --git a/database/migrations/2026_03_01_000000_add_status_to_orders_table.php b/database/migrations/2026_03_01_000000_add_status_to_orders_table.php
+new file mode 100644
+index 0000000..8698640
+--- /dev/null
++++ b/database/migrations/2026_03_01_000000_add_status_to_orders_table.php
+@@ -0,0 +1,22 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    public function up(): void
++    {
++        Schema::table('orders', function (Blueprint $table) {
++            $table->string('status')->default('open');
++        });
++    }
++
++    public function down(): void
++    {
++        Schema::table('orders', function (Blueprint $table) {
++            $table->dropColumn('status');
++        });
++    }
++};
