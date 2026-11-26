@@ -1,11 +1,13 @@
 name: CI
 
 # Runs on every pull request, whatever its target branch, and on the two
-# long-lived branches of gitflow after a merge.
+# long-lived branches of gitflow after a merge. release-prepare.yml starts it
+# by hand for a new release branch.
 on:
   pull_request:
   push:
     branches: [main, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read

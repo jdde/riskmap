@@ -10,7 +10,7 @@ The format only classifies. What follows from the labels is decided by the tool 
 
 ## State
 
-The repository holds the specification, the CLI in Go, example projects with expected results, and the survey of prior art. The CLI can validate a rule file (`riskmap validate`), classify a change (`riskmap classify`) and gate on it (`riskmap check`). Every command prints JSON by default and a report for people with `--format text`. Partial configs, release and distribution are still missing; see "Implementing the CLI". There is no conformance suite yet; section 12 of the spec describes its minimum scope.
+The repository holds the specification, the CLI in Go, example projects with expected results, and the survey of prior art. The CLI can validate a rule file (`riskmap validate`), classify a change (`riskmap classify`) and gate on it (`riskmap check`). Every command prints JSON by default and a report for people with `--format text`. Partial configs and distribution beyond GitHub releases are still missing; see "Implementing the CLI". There is no conformance suite yet; section 12 of the spec describes its minimum scope.
 
 Everything in the repository is written in English: documents, code, comments, error messages.
 
@@ -25,6 +25,8 @@ Everything in the repository is written in English: documents, code, comments, e
 | `go.mod`, `go.sum`, `cmd/`, `internal/` | Go source of the CLI | implementation |
 | `.github/workflows/ci.yml` | on every pull request and on pushes to `main` and `develop`: format, `go vet`, tests, coverage check, trial build for six targets | CI |
 | `.github/workflows/gitflow.yml` | checks source and target branch of a pull request | CI |
+| `.github/workflows/release-prepare.yml` | started by hand by the owner: creates `release/<version>` from `develop` and the pull request into `main` | release, see `CONTRIBUTING.md` |
+| `.github/workflows/release-publish.yml` | when a `release/*` or `hotfix/*` pull request is merged into `main`: tag, binaries for six targets, checksums, GitHub release, pull request back into `develop` | release |
 | `CONTRIBUTING.md` | branch model (gitflow) and the checks on a pull request | read before opening a pull request |
 | `scripts/coverage.sh` | measures test coverage, fails below 99 % | see "Test coverage" |
 | `schema/` | JSON Schemas of the output of `classify`, `check` and `validate` | contract for tools that read the output |
@@ -66,7 +68,7 @@ The expected values were derived by hand from draft 0.2 of the spec. `tests/acce
 
 ## Implementing the CLI
 
-As of 2026-11-23. Steps 1 to 5 of the order below are done. Open: release (6), distribution (7), partial configs and the checks against the file tree from section 4 of the spec.
+As of 2026-11-24. Steps 1 to 6 of the order below are done; the release workflows have not run on GitHub yet. Open: distribution (7), partial configs and the checks against the file tree from section 4 of the spec.
 
 Go module: `github.com/jdde/riskmap`. Tests run with `go test ./...`.
 
@@ -154,7 +156,7 @@ Exit codes: `0` a result with `ok` or `incomplete` (classify), below the limit (
 3. Evaluation and result format. **Done.**
 4. Inputs: paths from stdin, patch file, git refs. **Done.**
 5. Acceptance run as a Go test that reads `tests/acceptance/*.yml` and runs in CI. **Done.**
-6. Release workflow in GitHub Actions: six targets, checksums, provenance.
+6. Release workflow in GitHub Actions: six targets, checksums. **Done**, except provenance: the binaries carry no attestation yet, and the CLI has no `version` command.
 7. Distribution beyond that: install script, GitHub Action, pre-commit hook, npm package. The README currently tells users to `go install`; update its "Install" section when this lands.
 
 After that or in between:

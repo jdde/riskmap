@@ -2,9 +2,21 @@ name: Gitflow
 
 # Checks that a pull request goes from the right kind of branch into the right
 # target. The rules are described in CONTRIBUTING.md.
+# release-prepare.yml starts it by hand for the pull request it opens and
+# passes the two branch names as inputs.
 on:
   pull_request:
     types: [opened, reopened, synchronize, edited]
+  workflow_dispatch:
+    inputs:
+      head:
+        description: "Source branch of the pull request"
+        required: true
+        type: string
+      base:
+        description: "Target branch of the pull request"
+        required: true
+        type: string
 
 permissions: {}
 
@@ -18,8 +30,8 @@ jobs:
         # script text: a branch name is chosen by the author of the pull
         # request and must not be able to run commands here.
         env:
-          HEAD: ${{ github.head_ref }}
-          BASE: ${{ github.base_ref }}
+          HEAD: ${{ inputs.head || github.head_ref }}
+          BASE: ${{ inputs.base || github.base_ref }}
         run: |
           allowed=""
           case "$BASE" in

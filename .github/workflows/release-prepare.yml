@@ -1,0 +1,91 @@
+name: Prepare release
+
+# Started by hand by the owner of the repository. Creates the branch
+# release/<version> from develop and opens the pull request into main.
+# Nothing is published here: that happens in release-publish.yml once the
+# pull request is merged.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without the leading v, for example 0.2.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write       # create the branch
+  pull-requests: write  # open the pull request
+  actions: write        # start the checks on the new branch
+
+concurrency:
+  group: release-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Branch and pull request
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      # The version comes in as an environment variable and never as part of
+      # the script text, so it cannot run commands here.
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Only the owner may prepare a release
+        if: github.actor != github.repository_owner
+        run: |
+          echo "::error::Only the owner of the repository may start this workflow."
+          exit 1
+
+      - name: Check the version
+        run: |
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::\"$VERSION\" is not a version like 0.2.0 or 0.2.0-rc.1 (no leading v)."
+            exit 1
+          fi
+          if gh api "repos/$REPO/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::The tag v$VERSION already exists."
+            exit 1
+          fi
+          if gh api "repos/$REPO/git/ref/heads/release/$VERSION" >/dev/null 2>&1; then
+            echo "::error::The branch release/$VERSION already exists."
+            exit 1
+          fi
+          ahead=$(gh api "repos/$REPO/compare/main...develop" --jq .ahead_by)
+          if [ "$ahead" -eq 0 ]; then
+            echo "::error::develop has no commits that main lacks. There is nothing to release."
+            exit 1
+          fi
+
+      # The branch is created through the API at the commit develop points to.
+      # No files are pushed, so the token needs no right to change workflows.
+      - name: Create the branch release/<version>
+        run: |
+          sha=$(gh api "repos/$REPO/git/ref/heads/develop" --jq .object.sha)
+          gh api "repos/$REPO/git/refs" -f ref="refs/heads/release/$VERSION" -f sha="$sha" >/dev/null
+          echo "release/$VERSION created at $sha"
+
+      - name: Open the pull request into main
+        run: |
+          body=$(cat <<EOF
+          Release v$VERSION, prepared from \`develop\`.
+
+          - Last fixes go into this branch through \`bugfix/*\` pull requests.
+          - Merging this pull request publishes v$VERSION: the tag, the GitHub release and the binaries.
+          - Closing it without merging publishes nothing.
+          EOF
+          )
+          url=$(gh pr create --repo "$REPO" --base main --head "release/$VERSION" \
+            --title "Release v$VERSION" --body "$body")
+          echo "Pull request: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      # A pull request opened by a workflow does not start other workflows by
+      # itself; GitHub prevents that to avoid loops. Starting them by hand is
+      # allowed. The results are attached to the commit and therefore show up
+      # on the pull request.
+      - name: Start the checks on the new branch
+        run: |
+          gh workflow run ci.yml --repo "$REPO" --ref "release/$VERSION"
+          gh workflow run gitflow.yml --repo "$REPO" --ref "release/$VERSION" \
+            -f head="release/$VERSION" -f base=main

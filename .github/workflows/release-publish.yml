@@ -1,0 +1,101 @@
+name: Publish release
+
+# Runs when a pull request into main is closed and does its work only if it
+# was merged and came from release/<version> or hotfix/<version>. It tags the
+# merge commit with v<version>, builds the binaries and creates the GitHub
+# release. Then it opens the pull request that brings the branch back into
+# develop.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write       # create the tag and the release
+  pull-requests: write  # open the pull request into develop
+
+jobs:
+  publish:
+    name: Tag, build and release
+    # A branch in a fork cannot publish: the pull request has to come from
+    # this repository.
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      # Passed as environment variables, never as part of the script text.
+      BRANCH: ${{ github.head_ref }}
+      COMMIT: ${{ github.event.pull_request.merge_commit_sha }}
+    steps:
+      - name: Read the version from the branch name
+        run: |
+          version="${BRANCH#*/}"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::The branch \"$BRANCH\" does not end in a version like 0.2.0."
+            exit 1
+          fi
+          if gh api "repos/$REPO/git/ref/tags/v$version" >/dev/null 2>&1; then
+            echo "::error::The tag v$version already exists."
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build the six targets
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          mkdir dist
+          for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
+            os="${target%/*}"
+            arch="${target#*/}"
+            name="riskmap_${VERSION}_${os}_${arch}"
+            mkdir "$name"
+            cp LICENSE README.md "$name/"
+            if [ "$os" = windows ]; then
+              GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$name/riskmap.exe" ./cmd/riskmap
+              zip -q -r "dist/$name.zip" "$name"
+            else
+              GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$name/riskmap" ./cmd/riskmap
+              tar -czf "dist/$name.tar.gz" "$name"
+            fi
+          done
+          cd dist
+          sha256sum riskmap_* > checksums.txt
+          cat checksums.txt
+
+      # Creating the release also creates the tag, on the merge commit.
+      # A version with a suffix such as 0.2.0-rc.1 is marked as a pre-release.
+      - name: Create the tag and the release
+        run: |
+          prerelease=""
+          case "$VERSION" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "v$VERSION" dist/* --repo "$REPO" --target "$COMMIT" \
+            --title "v$VERSION" --generate-notes $prerelease
+          echo "Published v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+
+      # Fixes made on the release branch must not be lost for the next version.
+      - name: Open the pull request back into develop
+        run: |
+          if ! gh api "repos/$REPO/git/ref/heads/$BRANCH" >/dev/null 2>&1; then
+            echo "::warning::The branch $BRANCH was deleted after the merge. If it held fixes that develop lacks, bring them back by hand."
+            exit 0
+          fi
+          ahead=$(gh api "repos/$REPO/compare/develop...$BRANCH" --jq .ahead_by)
+          if [ "$ahead" -eq 0 ]; then
+            echo "develop already has every commit of $BRANCH, no pull request needed."
+            exit 0
+          fi
+          gh pr create --repo "$REPO" --base develop --head "$BRANCH" \
+            --title "Merge $BRANCH back into develop" \
+            --body "Brings the last fixes of v$VERSION back into \`develop\`. Delete the branch after merging."
