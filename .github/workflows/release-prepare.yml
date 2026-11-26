@@ -76,8 +76,14 @@ jobs:
           - Closing it without merging publishes nothing.
           EOF
           )
-          url=$(gh pr create --repo "$REPO" --base main --head "release/$VERSION" \
-            --title "Release v$VERSION" --body "$body")
+          # Without the pull request the branch is of no use and would block
+          # the next attempt, so it is removed again.
+          if ! url=$(gh pr create --repo "$REPO" --base main --head "release/$VERSION" \
+            --title "Release v$VERSION" --body "$body"); then
+            gh api -X DELETE "repos/$REPO/git/refs/heads/release/$VERSION" >/dev/null || true
+            echo "::error::The pull request could not be opened; the branch release/$VERSION was removed again. Is \"Allow GitHub Actions to create and approve pull requests\" switched on (Settings, Actions, General)?"
+            exit 1
+          fi
           echo "Pull request: $url" >> "$GITHUB_STEP_SUMMARY"
 
       # A pull request opened by a workflow does not start other workflows by
