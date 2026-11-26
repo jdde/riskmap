@@ -46,7 +46,9 @@ Why you might want this:
 
 ### 1. Install
 
-Riskmap is a single binary without dependencies. Until the first release with prebuilt binaries is out, install it with Go 1.27 or newer:
+Riskmap is a single binary without dependencies. Download the archive for your system from the [latest release](https://github.com/jdde/riskmap/releases/latest) (macOS, Linux and Windows, each for x64 and arm64), unpack it and put `riskmap` on your `PATH`. The release lists the SHA-256 of every archive in `checksums.txt`.
+
+Or build it with Go 1.27 or newer:
 
 ```sh
 go install github.com/jdde/riskmap/cmd/riskmap@latest
@@ -248,13 +250,15 @@ All three print JSON by default and a report for people with `--format text`.
 | `PATH...` | the given paths | the working directory |
 | *(nothing)* | NUL-separated paths from standard input | the working directory |
 
+Options come before the paths: `riskmap check --fail-on medium src/a.ts`. Paths are written the way git writes them, relative and with `/`. A path written another way (`./src/a.ts`, `src/../a.ts`, `/src/a.ts`) is not matched against the rules and counts as the highest level, so that a different spelling cannot slip past a strict rule.
+
 Exit codes: `0` success, `1` the rule file is missing or invalid, `2` wrong usage or a git error, `3` `check` reached the `--fail-on` level. A missing or broken rule file is never a pass.
 
 ## Status
 
 Riskmap is a draft. The format is specified in [`SPEC.md`](SPEC.md) (v1, draft 0.2) and may still change.
 
-Working today: `check`, `classify` and `validate` with a single rule file in the repository root. Not there yet: prebuilt binaries and a GitHub Action, rule files in subdirectories of a monorepo (section 9 of the spec), and checks against the file tree such as "this glob matches nothing".
+Working today: `check`, `classify` and `validate` with a single rule file in the repository root. Not there yet: a GitHub Action, rule files in subdirectories of a monorepo (section 9 of the spec), and checks against the file tree such as "this glob matches nothing".
 
 ## Further reading
 

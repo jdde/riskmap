@@ -68,7 +68,7 @@ The expected values were derived by hand from draft 0.2 of the spec. `tests/acce
 
 ## Implementing the CLI
 
-As of 2026-11-24. Steps 1 to 6 of the order below are done; the release workflows have not run on GitHub yet. Open: distribution (7), partial configs and the checks against the file tree from section 4 of the spec.
+As of 2026-11-24. Steps 1 to 6 of the order below are done; v0.2.0 (2026-11-26) was the first release built by the workflows. Open: distribution (7), partial configs and the checks against the file tree from section 4 of the spec.
 
 Go module: `github.com/jdde/riskmap`. Tests run with `go test ./...`.
 
@@ -134,7 +134,7 @@ Sources for `classify` and `check`, mutually exclusive:
 | `--patch FILE` | from the working directory |
 | `PATH...` or NUL-separated paths on stdin | from the working directory |
 
-`--root DIR` names the directory of the rule file, `--incomplete` marks the set of paths as incomplete.
+`--root DIR` names the directory of the rule file, `--incomplete` marks the set of paths as incomplete. Options come before the paths; an option after a path is a usage error, because Go's flag package would otherwise read it as a path. `--` ends the options.
 
 ### Output for other programs
 
@@ -156,8 +156,8 @@ Exit codes: `0` a result with `ok` or `incomplete` (classify), below the limit (
 3. Evaluation and result format. **Done.**
 4. Inputs: paths from stdin, patch file, git refs. **Done.**
 5. Acceptance run as a Go test that reads `tests/acceptance/*.yml` and runs in CI. **Done.**
-6. Release workflow in GitHub Actions: six targets, checksums. **Done**, except provenance: the binaries carry no attestation yet, and the CLI has no `version` command.
-7. Distribution beyond that: install script, GitHub Action, pre-commit hook, npm package. The README currently tells users to `go install`; update its "Install" section when this lands.
+6. Release workflow in GitHub Actions: six targets, checksums. **Done**, except provenance: the binaries carry no attestation yet. The workflow sets the version that `riskmap version` prints; a binary built any other way prints `dev`. The binaries of v0.2.0 still print `dev` and are stamped as built from a modified tree, because that build created its archive folders inside the checkout.
+7. Distribution beyond that: install script, GitHub Action, pre-commit hook, npm package. The README points to the archives of the GitHub release and to `go install`; update its "Install" section when this lands.
 
 After that or in between:
 
@@ -211,6 +211,7 @@ Places the draft leaves open and the CLI has decided provisionally. Each belongs
 - **§7, self-protection for `set`:** the values from `default` are added even when a rule matches the rule file and the default would otherwise drop out.
 - **§2.2, strictest value of a `set`:** all values from `default` and the rules, not those from `tests`.
 - **§10.2, renames:** `--base` and `--staged` switch off git's rename detection, so the old and the new path both appear. In a patch, the source of a copy (`copy from`) does not count.
+- **§3, spelling of a path:** a path with a segment `.`, `..` or an empty segment (which covers a leading or trailing `/`) is not matched and gets the strictest result with the reason `unreadable-path`. Otherwise `./secrets/key` would slip past a rule for `secrets/**`. Git never writes such paths; they only come in as arguments or on standard input. On Windows, `\` in a path argument is turned into `/`.
 - **§3, three places in the glob dialect**, decided provisionally by `internal/glob`:
   - `?` matches one character in the sense of a Unicode code point, not a byte. `?ber` matches `Über`.
   - `!`, `{`, `}`, `[`, `]` and backslash are an error anywhere in a pattern, not only at the start. Files with these characters in their name can only be matched with `*` or `?`.

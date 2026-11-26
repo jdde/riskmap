@@ -349,6 +349,8 @@ func TestCheck(t *testing.T) {
 		{"default applies", []string{"unknown.txt"}, exitTooHigh, "default: no rule matches this path", "FAILED"},
 		{"incomplete", []string{"--incomplete", "README.md"}, exitTooHigh, "risk: high", "incomplete"},
 		{"unknown level", []string{"--fail-on", "critical", "README.md"}, exitUsage, "", "is not one of low, medium, high"},
+		{"option after a path", []string{"README.md", "--fail-on", "low"}, exitUsage, "", `option "--fail-on" must come before the paths`},
+		{"path that starts with a dash", []string{"--", "-notes.txt"}, exitTooHigh, "  high    -notes.txt\n", "FAILED"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -364,6 +366,22 @@ func TestCheck(t *testing.T) {
 				t.Errorf("stderr does not contain %q:\n%s", c.wantStderr, stderr)
 			}
 		})
+	}
+}
+
+// A wrong --fail-on is a usage error even when there is no rule file.
+func TestCheckUnknownLevelWithoutRuleFile(t *testing.T) {
+	code, stdout, stderr := invoke("", "check", "--root", t.TempDir(), "--fail-on", "critical", "a.txt")
+	if code != exitUsage || stdout != "" || !strings.Contains(stderr, "is not one of low, medium, high") {
+		t.Errorf("exit %d, stdout %q, stderr %q", code, stdout, stderr)
+	}
+}
+
+// "classify a.md --incomplete" must not quietly read the option as a path.
+func TestClassifyOptionAfterPath(t *testing.T) {
+	code, stdout, stderr := invoke("", "classify", "--root", example, "README.md", "--incomplete")
+	if code != exitUsage || stdout != "" || !strings.Contains(stderr, `option "--incomplete" must come before the paths`) {
+		t.Errorf("exit %d, stdout %q, stderr %q", code, stdout, stderr)
 	}
 }
 
@@ -437,7 +455,7 @@ func TestClassifyUnreadableStdin(t *testing.T) {
 
 func TestCheckUnreadablePath(t *testing.T) {
 	code, stdout, _ := invoke("", "check", "--format", "text", "--root", example, "docs/\xff.md")
-	if code != exitTooHigh || !strings.Contains(stdout, "unreadable path: counts as the highest level") {
+	if code != exitTooHigh || !strings.Contains(stdout, "unreadable path (not valid UTF-8, or not written as a/b/c): counts as the highest level") {
 		t.Errorf("exit %d, stdout:\n%s", code, stdout)
 	}
 }

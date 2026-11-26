@@ -155,6 +155,12 @@ func (e *InvalidError) Error() string {
 // riskDimension is predefined by the specification and cannot be redefined.
 var riskDimension = Dimension{Name: "risk", Kind: Ordered, Values: []string{"low", "medium", "high"}}
 
+// RiskLevels returns the values of the predefined dimension "risk", mildest
+// first. They are the same for every rule file.
+func RiskLevels() []string {
+	return append([]string(nil), riskDimension.Values...)
+}
+
 // Parse reads the rule file in the root of a repository. The file name is only
 // used in messages.
 //
