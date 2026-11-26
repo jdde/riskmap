@@ -354,6 +354,7 @@ func TestUsageErrorsPrintNoResult(t *testing.T) {
 		{"check", "--format", "yaml", "README.md"},
 		{"validate", "--format", "yaml"},
 		{"check", "--root", example, "--fail-on", "critical", "README.md"},
+		{"check", "--root", example, "README.md", "--fail-on", "low"},
 		{"classify", "--root", example, "--patch", "does-not-exist.patch"},
 		{"classify", "--root", example, "--base", "no-such-ref"},
 	}

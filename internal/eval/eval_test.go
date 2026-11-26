@@ -116,6 +116,12 @@ func TestEvaluatePath(t *testing.T) {
 		{"docs/\xff.md", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
 		{"docs/a\x00b.md", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
 		{"", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
+		// Another spelling of a path must not slip past the strict rules.
+		{"./docs/setup.md", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
+		{"x/../docs/setup.md", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
+		{"/docs/setup.md", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
+		{"docs//setup.md", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
+		{"docs/", "data=personal domain=[app,auth,config,docs,unknown] protected=true risk=high", "unreadable-path"},
 	}
 	for _, c := range cases {
 		got := EvaluatePath(cfg, []byte(c.path))

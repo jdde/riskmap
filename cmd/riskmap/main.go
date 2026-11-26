@@ -53,7 +53,8 @@ Usage:
           A patch written by git. "-" reads the patch from standard input.
           The rule file is read from DIR.
       PATH...
-          The given paths. The rule file is read from DIR.
+          The given paths. The rule file is read from DIR. Options come
+          before the paths. Write "--" before a path that starts with "-".
       (nothing)
           Paths from standard input, separated by NUL bytes, for example:
               git diff --name-only --no-renames -z A B | riskmap classify
@@ -79,7 +80,9 @@ Usage:
   riskmap help
 
 DIR is the directory that holds the .riskmap.yml. It defaults to the
-current directory. Paths are relative to it and use "/".
+current directory. Paths are relative to it and use "/". A path written
+another way ("./a", "a/../b", "/a") is not matched against the rules and
+counts as the highest level.
 
 Output:
   Every command prints JSON by default. --format text prints a report
@@ -255,6 +258,17 @@ func classify(command string, args []string, stdin io.Reader, stdout, stderr io.
 	if *head != "" && *base == "" {
 		return fail("--head needs --base")
 	}
+	// The levels of "risk" are fixed, so a wrong --fail-on is reported before
+	// anything is read.
+	if levels := config.RiskLevels(); check && !contains(levels, failOn) {
+		return fail("--fail-on %q is not one of %s", failOn, strings.Join(levels, ", "))
+	}
+	// Go's flag package stops at the first argument that is not an option.
+	// In "check a.md --fail-on low" it would take "--fail-on" and "low" as
+	// paths and leave the limit at its default, so that is an error.
+	if option := optionAfterPath(args, flags.Args()); option != "" {
+		return fail("option %q must come before the paths; for a path that starts with \"-\", write \"--\" before the paths", option)
+	}
 
 	var (
 		paths [][]byte
@@ -310,7 +324,9 @@ func classify(command string, args []string, stdin io.Reader, stdout, stderr io.
 
 	case flags.NArg() > 0:
 		for _, arg := range flags.Args() {
-			paths = append(paths, []byte(arg))
+			// On Windows the shell hands over paths with "\". ToSlash turns
+			// them into "/" there and does nothing on other systems.
+			paths = append(paths, []byte(filepath.ToSlash(arg)))
 		}
 		l, err = loadFromDir(*root)
 
@@ -357,10 +373,7 @@ func classify(command string, args []string, stdin io.Reader, stdout, stderr io.
 		return exitOK
 	}
 
-	limit := risk.Rank(failOn)
-	if limit < 0 {
-		return fail("--fail-on %q is not one of %s", failOn, strings.Join(risk.Values, ", "))
-	}
+	limit := risk.Rank(failOn) // checked above
 
 	// The verdict: how many paths reach the limit, and whether the change as
 	// a whole does. The second is not the same as "at least one path": an
@@ -392,6 +405,31 @@ func classify(command string, args []string, stdin io.Reader, stdout, stderr io.
 		fmt.Fprintf(stderr, "\nriskmap: FAILED: %d of %d changed paths at risk %q or higher (--fail-on %s)\n", verdict.FailingPaths, len(r.Paths), failOn, failOn)
 	}
 	return exitTooHigh
+}
+
+// optionAfterPath returns the first PATH argument that looks like an option,
+// or "" if there is none. args is everything after the command, paths is what
+// the flag package left over. After a "--" every argument is a path, whatever
+// it looks like.
+func optionAfterPath(args, paths []string) string {
+	if before := len(args) - len(paths); before > 0 && args[before-1] == "--" {
+		return ""
+	}
+	for _, path := range paths {
+		if strings.HasPrefix(path, "-") {
+			return path
+		}
+	}
+	return ""
+}
+
+func contains(list []string, s string) bool {
+	for _, item := range list {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }
 
 // report prints a classification for a person to read (--format text).
@@ -441,7 +479,7 @@ func showBecause(b eval.Because) string {
 		return "default: no rule matches this path"
 	}
 	// The only kind left for a path (see eval.EvaluatePath).
-	return "unreadable path: counts as the highest level"
+	return "unreadable path (not valid UTF-8, or not written as a/b/c): counts as the highest level"
 }
 
 func validate(args []string, stdout, stderr io.Writer) int {

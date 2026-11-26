@@ -103,7 +103,7 @@ func evaluatePath(cfg *config.Config, path []byte) PathResult {
 
 	// A path we cannot represent cannot be matched reliably. It gets the
 	// strictest result instead of slipping through.
-	if !utf8.Valid(path) || bytes.IndexByte(path, 0) >= 0 || len(path) == 0 {
+	if !utf8.Valid(path) || bytes.IndexByte(path, 0) >= 0 || !canonical(path) {
 		result.Labels = Strictest(cfg)
 		result.Because = []Because{{Kind: KindUnreadablePath}}
 		return result
@@ -140,6 +140,23 @@ func evaluatePath(cfg *config.Config, path []byte) PathResult {
 
 	fillEmpty(cfg, result.Labels)
 	return result
+}
+
+// canonical reports whether a path is written the way section 3 of the
+// specification expects: relative, with "/" between the segments, and without
+// the segments "", "." and "..". Git writes paths this way.
+//
+// Another spelling of the same file, such as "./secrets/key" or
+// "x/../secrets/key", would slip past the rule for "secrets/**". So such a
+// path is not matched at all and gets the strictest result.
+func canonical(path []byte) bool {
+	for _, segment := range bytes.Split(path, []byte("/")) {
+		switch string(segment) {
+		case "", ".", "..":
+			return false
+		}
+	}
+	return true
 }
 
 // matchRule reports whether a rule applies to a path and which of its globs
