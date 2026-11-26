@@ -51,28 +51,38 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # The archives are put together outside the checkout. Files created
+      # inside it would make Go stamp the binaries as built from a modified
+      # tree. The version is set with -X, so "riskmap version" reports it.
       - name: Build the six targets
         env:
           CGO_ENABLED: "0"
         run: |
-          mkdir dist
+          src="$PWD"
+          out="$RUNNER_TEMP/release"
+          mkdir -p "$out/dist"
           for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
             os="${target%/*}"
             arch="${target#*/}"
             name="riskmap_${VERSION}_${os}_${arch}"
-            mkdir "$name"
-            cp LICENSE README.md "$name/"
+            mkdir "$out/$name"
+            cp LICENSE README.md "$out/$name/"
             if [ "$os" = windows ]; then
-              GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$name/riskmap.exe" ./cmd/riskmap
-              zip -q -r "dist/$name.zip" "$name"
+              GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o "$out/$name/riskmap.exe" ./cmd/riskmap
+              (cd "$out" && zip -q -r "dist/$name.zip" "$name")
             else
-              GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "$name/riskmap" ./cmd/riskmap
-              tar -czf "dist/$name.tar.gz" "$name"
+              GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o "$out/$name/riskmap" ./cmd/riskmap
+              tar -czf "$out/dist/$name.tar.gz" -C "$out" "$name"
             fi
           done
-          cd dist
+          cd "$out/dist"
           sha256sum riskmap_* > checksums.txt
           cat checksums.txt
+          # The tree must still be clean, or the stamp in the binaries is wrong.
+          if [ -n "$(git -C "$src" status --porcelain)" ]; then
+            echo "::error::The build left files in the checkout."
+            exit 1
+          fi
 
       # Creating the release also creates the tag, on the merge commit.
       # A version with a suffix such as 0.2.0-rc.1 is marked as a pre-release.
@@ -80,7 +90,7 @@ jobs:
         run: |
           prerelease=""
           case "$VERSION" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "v$VERSION" dist/* --repo "$REPO" --target "$COMMIT" \
+          gh release create "v$VERSION" "$RUNNER_TEMP"/release/dist/* --repo "$REPO" --target "$COMMIT" \
             --title "v$VERSION" --generate-notes $prerelease
           echo "Published v$VERSION" >> "$GITHUB_STEP_SUMMARY"
 
